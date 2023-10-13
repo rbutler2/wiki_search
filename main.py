@@ -10,12 +10,14 @@ import requests
 from transformers import AutoTokenizer, DataCollatorForSeq2Seq
 from transformers.utils.dummy_pt_objects import TopKLogitsWarper
 from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import WebBaseLoader
+from langchain.document_loaders import TextLoader
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.llm import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 import openai
+import os
+from dotenv import load_dotenv
 
 #save topic as a url
 url = (f'https://en.wikipedia.org/wiki/{topic}')
@@ -29,22 +31,27 @@ soup = bs(response.text, 'lxml').text
 keys_file = open("config.txt")
 lines = keys_file.readlines()
 api_key = lines[0].rstrip()
-openai.api_key = api_key
+#openai.api_key = api_key
+os.environ["OPENAI_API_KEY"] = api_key
 
 #define the propt
-propt_template = """please summerize the following: "{soup}" CONCISE SUMMARY:"""
+prompt_template = """please summerize the following: "{soup}" CONCISE SUMMARY:"""
 
-propt = PromptTemplate.from_template(propt_template)
+prompt = PromptTemplate.from_template(prompt_template)
+
+f = open("prompt.txt", mode="wt", encoding="utf-8")
+f.write(f"please summerize the following: {soup} CONCISE SUMMARY:")
 
 #define llm chain
-llm = ChatOpenAI(tempature=0, model_name="gpt-3.5-turbo-16k")
-llm_chain = LLMChain(llm=llm, propt=propt)
+llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-16k")
+llm_chain = LLMChain(llm=llm, prompt=prompt)
 
 #define stuff documant chain
 stuff_chain = StuffDocumentsChain(
     llm_chain=llm_chain, document_variable_name="soup"
 )
 
+loader = TextLoader('prompt.txt')
 docs = loader.load()
 print(stuff_chain.run(docs))
 
