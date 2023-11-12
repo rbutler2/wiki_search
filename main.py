@@ -7,22 +7,11 @@ email = input("To grab the information from wikipidia please tell me your email 
 
 # import dependancies
 # note that this is done after the propt so that the user does not experiance a wait time before giving the propt
-from bs4 import BeautifulSoup as bs
-import requests
-from dotenv import load_dotenv
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.text_rank import TextRankSummarizer
 from sumy.utils import get_stop_words
 import wikipediaapi
-
-#save topic as a url
-#url = (f'https://en.wikipedia.org/wiki/{topic}')
-
-#grab the web page
-#response = requests.get(url)
-
-#soup = bs(response.text, 'lxml').text
 
 wiki_wiki = wikipediaapi.Wikipedia(f"MyProjectName ({email})","en")
 
@@ -35,17 +24,30 @@ if page.exists():
 else:
     print("Sorry but this page does not exist")
 
-#print(text)
-
 parser = PlaintextParser.from_string(text, Tokenizer("english"))
 
 summarizer = TextRankSummarizer()
 
 summarizer.stop_words = get_stop_words("english")
 
-summary_length = 20
+summary_length = input("How long would you like the summary to be? ")
 
-summary = summarizer(parser.document, summary_length)
+if type(summary_length) is int:
+    f_summary_length = summary_length 
 
+elif summary_length == "short".lower():
+    f_summary_length = 5
+
+elif summary_length == "medium".lower():
+    f_summary_length = 10
+
+elif summary_length == "long".lower():
+    f_summary_length = 20
+
+
+summary = summarizer(parser.document, f_summary_length)
+
+print(f"\n------------------------------------\n{topic}\n------------------------------------\n")
 for sentence in summary:
     print(sentence)
+print("\n------------------------------------\n")
